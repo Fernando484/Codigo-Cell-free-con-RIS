@@ -9,10 +9,10 @@ for t = 1:nbrOfRealizations  % Por cada realización
         for n = 1:Ngroup      % Por cada elemento n de la RIS s
 
             Hn = h_s + Hhat_cascade(:,(Ngroup * (s - 1) + 1),t,risAssignment{s}) - thetaMatrix(n,s)* Hhat_cascade(:,n + (Ngroup * (s - 1)),t,risAssignment{s})    ;%h_r(:,n)*h_t(n,:)
-            bn = p*Hn'*Hhat_cascade(:,(Ngroup * (s - 1) + 1),t,risAssignment{s});
+            bn = p*Hn;
             An = eye(N_AP*L) + p*(Hn*Hn') + p*Hhat_cascade(:,(Ngroup * (s - 1) + 1),t,risAssignment{s})*(Hhat_cascade(:,(Ngroup * (s - 1) + 1),t,risAssignment{s}))';
 
-            thetaMatrix(n,s) = exp(-1i*angle(bn' *(An(:,n)\Hhat_cascade(:,(Ngroup * (s - 1) + 1),t,risAssignment{s}))));              
+            thetaMatrix(n,s) = exp(-1i*angle(bn' *(An\Hhat_cascade(:,(Ngroup * (s - 1) + 1),t,risAssignment{s}))));              
         end        
     end
 end
