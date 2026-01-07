@@ -31,7 +31,7 @@ S_values = [0,5,10,20,50,100];
 %S_values = 5;
 for s = 1:length(S_values)
     S = S_values(s);
-    tau_p = K + S*(N_RIS/groupRIS_size+1);
+    tau_p = K;
     for n = 1:nbrOfSetups
         disp(['Setup ' num2str(n) '/' num2str(nbrOfSetups) ' asistido por ' num2str(S) ' RIS']);
     
