@@ -3,7 +3,7 @@ close all;
 clear;
 
 %% Setup de simulación
-nbrOfSetups = 1;   % Número de escenarios
+nbrOfSetups = 20;   % Número de escenarios
 nbrOfRealizations = 100;    % Número de realizaciones
 
 L = 20;         % Número de APs
@@ -27,7 +27,7 @@ SE_PMMSE_DCC = zeros(K, nbrOfSetups, 6);
 %SE_MR_DIST   = zeros(K, nbrOfSetups, 6);
 
 %% Numero de RIS
-S_values = [0,5,10,20,50];
+S_values = [0,5,10,20,50,75];
 for s = 1:length(S_values)
     S = S_values(s);
     tau_p = K + S*(N_RIS/groupRIS_size+1);
@@ -72,8 +72,6 @@ for s = 1:length(S_values)
             [Hhat_agregated,B_agregated,C_agregated] = channelEstimates(H_eq,HMean_AP_UE,[],[],[],[],R_eq,[],nbrOfRealizations,L,K,N_AP,tau_p,pilotIndex,p,risAssignment,S,[]);
         else
             [Hhat_agregated,B_agregated,C_agregated] = channelEstimates(H_cascade,HMean_AP_UE,[],[],[],[],R_cascade,[],nbrOfRealizations,L,K,N_AP,tau_p,pilotIndex,p,risAssignment,S,[]);
-            % H_eq = H_AP_UE;
-            % R_eq = R_AP_UE;
         end
         % % Calcular SE
         [SE_P_MMSE, SE_MR_dist] = SE_uplink(Hhat_agregated,H_cascade,D,B_agregated,C_agregated,tau_c,tau_p,nbrOfRealizations,N_AP,K,L,p,R_cascade,pilotIndex);
@@ -84,11 +82,11 @@ for s = 1:length(S_values)
         %sum(SE_P_MMSE)
         %SE_MR_DIST(:,n,s)  = SE_MR_dist;
 
-        clear Hhat H_eq B C R_eq;
+        clear Hhat H_cascade Hhat_cascade Hhat_agregated H_eq B B_cascade B_agregated  C C_cascade C_agregated R_eq;
     end
 end
 
-save('results1')
+%save('results1')
 
 %% Graficar resultados
 figure; hold on; box on;
@@ -100,17 +98,18 @@ aux2 = SE_PMMSE_DCC(:,:,2); % 5 RIS
 aux3 = SE_PMMSE_DCC(:,:,3); % 10 RIS
 aux4 = SE_PMMSE_DCC(:,:,4); % 20 RIS
 aux5 = SE_PMMSE_DCC(:,:,5); % 50 RIS
-%aux6 = SE_PMMSE_DCC(:,:,6); % 100 RIS
+aux6 = SE_PMMSE_DCC(:,:,6); % 100 RIS
+
 
 plot(sort(aux1(:)), linspace(0,1,K*nbrOfSetups), 'k-', 'LineWidth', 2);
 plot(sort(aux2(:)), linspace(0,1,K*nbrOfSetups), 'r-',  'LineWidth', 2);
 plot(sort(aux3(:)), linspace(0,1,K*nbrOfSetups), 'g-', 'LineWidth', 2);
 plot(sort(aux4(:)), linspace(0,1,K*nbrOfSetups), 'b-', 'LineWidth', 2);
 plot(sort(aux5(:)), linspace(0,1,K*nbrOfSetups), 'm-',  'LineWidth', 2);
-%plot(sort(aux6(:)), linspace(0,1,K*nbrOfSetups), 'y-', 'LineWidth', 2);
+plot(sort(aux6(:)), linspace(0,1,K*nbrOfSetups), 'y-', 'LineWidth', 2);
 
 % % Ejes y leyenda
 xlabel('Spectral efficiency [bit/s/Hz]', 'Interpreter', 'Latex');
 ylabel('CDF', 'Interpreter', 'Latex');
-legend({'P-MMSE 0 RIS', 'P-MMSE 5 RIS', 'P-MMSE 10 RIS', 'P-MMSE 20 RIS', 'P-MMSE 50 RIS'}, 'Interpreter', 'Latex', 'Location', 'SouthEast');
+legend({'P-MMSE 0 RIS', 'P-MMSE 5 RIS', 'P-MMSE 10 RIS', 'P-MMSE 20 RIS', 'P-MMSE 50 RIS','P-MMSE 75 RIS'}, 'Interpreter', 'Latex', 'Location', 'SouthEast');
 xlim([0 25]);

@@ -3,7 +3,7 @@ close all;
 clear;
 
 %% Setup de simulación
-nbrOfSetups = 1;   % Número de escenarios
+nbrOfSetups = 20;   % Número de escenarios
 nbrOfRealizations = 100;    % Número de realizaciones
 
 L = 20;         % Número de APs
@@ -20,14 +20,14 @@ LoS = 2;         % Linea de visión directa
 % Desviación estándar angular en el modelo de dispersión local (en radianes)
 ASD_varphi = deg2rad(15);  % angulo de azimut 
 %ASD_theta = deg2rad(15);  % angulo de elevación
-groupRIS_size = 4;         % 1,4,16
+groupRIS_size = 1;         % 1,4,16
 
 % Arreglos 3D para guardar resultados por tipo de canal 
 SE_PMMSE_DCC = zeros(K, nbrOfSetups, 6);  
 %SE_MR_DIST   = zeros(K, nbrOfSetups, 6);
 
 %% Numero de RIS
-S_values = [0,5,10,20,50,100];
+S_values = [0,5,10,20,50,75];
 %S_values = 5;
 for s = 1:length(S_values)
     S = S_values(s);
@@ -116,5 +116,5 @@ plot(sort(aux6(:)), linspace(0,1,K*nbrOfSetups), 'y-', 'LineWidth', 2);
 % % Ejes y leyenda
 xlabel('Spectral efficiency [bit/s/Hz]', 'Interpreter', 'Latex');
 ylabel('CDF', 'Interpreter', 'Latex');
-legend({'P-MMSE 0 RIS', 'P-MMSE 5 RIS', 'P-MMSE 10 RIS', 'P-MMSE 20 RIS', 'P-MMSE 50 RIS','P-MMSE 100 RIS'}, 'Interpreter', 'Latex', 'Location', 'SouthEast');
+legend({'P-MMSE 0 RIS', 'P-MMSE 5 RIS', 'P-MMSE 10 RIS', 'P-MMSE 20 RIS', 'P-MMSE 50 RIS','P-MMSE 75 RIS'}, 'Interpreter', 'Latex', 'Location', 'SouthEast');
 xlim([0 25]);
