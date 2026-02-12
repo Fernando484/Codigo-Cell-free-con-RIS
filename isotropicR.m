@@ -1,12 +1,15 @@
-function R = isotropicR(lambda, N_HV, d) 
+function R = isotropicR(lambda, N_H, N_V, d) 
 % lambda es la longitud de onda
-% N_HV es el número de elementos de cada fila y cada columna
+% N_H es el número de elementos de cada fila
+% N_V es el número de elementos de cada columna
 % d es el tamaño de cada elemento cuadrado de la RIS dH x dV
 
 %Generate a grid for the elements
-gridPoints = (0:N_HV-1)*d;
+gridPoints_H = (0:N_H-1)*d;
+gridPoints_V = (0:N_V-1)*d;
 
-[X,Y] = meshgrid(gridPoints,gridPoints);
+
+[X,Y] = meshgrid(gridPoints_H,gridPoints_V);
 
 locations = X(:)+1i*Y(:);
 

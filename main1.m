@@ -8,8 +8,8 @@ nbrOfRealizations = 100;    % Número de realizaciones
 
 L = 20;         % Número de APs
 N_AP = 4;        % Antenas por AP
-N_H_RIS = 8;    % Número de filas de la RIS
-N_V_RIS = N_H_RIS;    % Número de columnas de la RIS
+N_H_RIS = 9;    % Número de filas de la RIS
+N_V_RIS = 9;    % Número de columnas de la RIS
 N_RIS = N_V_RIS*N_H_RIS;     % Número de elementos de la RIS
 K = 10;          % Número de UEs
 tau_c = 20000;     % Longitud del bloque de coherencia
@@ -19,8 +19,14 @@ fc = 3.5;         % Frecuencia (GHz)
 LoS = 2;         % Linea de visión directa
 % Desviación estándar angular en el modelo de dispersión local (en radianes)
 ASD_varphi = deg2rad(15);  % angulo de azimut 
-%ASD_theta = deg2rad(15);  % angulo de elevación
-groupRIS_size = 4;         % 1,4,16
+ASD_theta = deg2rad(30);  % angulo de elevación
+if (N_H_RIS == N_V_RIS && log2(N_H_RIS^2) == floor(log2(N_H_RIS^2)))
+    groupRIS_size = 16;         % 1,4,16,64
+else
+    groupRIS_size_H = 3;
+    groupRIS_size_V = 3;
+    groupRIS_size = groupRIS_size_H*groupRIS_size_V;
+end
 
 % Arreglos 3D para guardar resultados por tipo de canal 
 SE_PMMSE_DCC = zeros(K, nbrOfSetups, 6);  
@@ -28,6 +34,7 @@ SE_PMMSE_DCC = zeros(K, nbrOfSetups, 6);
 
 %% Numero de RIS
 S_values = [0,5,10,20,50,75];
+%S_values = 1;
 for s = 1:length(S_values)
     S = S_values(s);
     tau_p = K + S*(N_RIS/groupRIS_size+1);
@@ -35,7 +42,7 @@ for s = 1:length(S_values)
         disp(['Setup ' num2str(n) '/' num2str(nbrOfSetups) ' asistido por ' num2str(S) ' RIS']);
     
         % Generar escenario
-        [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,n,ASD_varphi,LoS,fc,S,N_H_RIS,N_V_RIS);
+        [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,n,ASD_varphi,ASD_theta,LoS,fc,S,N_H_RIS,N_V_RIS);
         
         % Asignacion de RIS
         if S == 0
@@ -45,19 +52,41 @@ for s = 1:length(S_values)
         end
         
         %Generar canales
-        [H_AP_UE,HMean_AP_UE,HMean_RIS_UE,HMean_AP_RIS,H_AP_RIS_grouped,H_AP_RIS,H_RIS_UE_grouped,H_RIS_UE,R_cascade,Ngroup,H_cascade] = channelGeneration(R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,nbrOfRealizations,L,K,S,N_AP,N_RIS,HMean_AP_UE,HMean_AP_RIS,HMean_RIS_UE,groupRIS_size, N_H_RIS);
+        if (N_V_RIS == N_H_RIS   && log2(N_H_RIS^2) == floor(log2(N_H_RIS^2)))     % RIS cuadrada y de dimensión multiplo de 2
+            [H_AP_UE,HMean_AP_UE,HMean_RIS_UE,HMean_AP_RIS,H_AP_RIS_grouped,H_AP_RIS,H_RIS_UE_grouped,H_RIS_UE,R_cascade,Ngroup,H_cascade] = channelGeneration(R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,nbrOfRealizations,L,K,S,N_AP,N_RIS,HMean_AP_UE,HMean_AP_RIS,HMean_RIS_UE,groupRIS_size, N_H_RIS,N_V_RIS,[],[]);
+        else                        % RIS rectangular
+            [H_AP_UE,HMean_AP_UE,HMean_RIS_UE,HMean_AP_RIS,H_AP_RIS_grouped,H_AP_RIS,H_RIS_UE_grouped,H_RIS_UE,R_cascade,Ngroup,H_cascade] = channelGeneration(R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,nbrOfRealizations,L,K,S,N_AP,N_RIS,HMean_AP_UE,HMean_AP_RIS,HMean_RIS_UE,groupRIS_size, N_H_RIS,N_V_RIS,groupRIS_size_H,groupRIS_size_V);
+        end
         if (S>0)
             % Estimar canales
-            [Hhat,B,C,Hhat_cascade,B_cascade,C_cascade] = channelEstimates(H_AP_UE,HMean_AP_UE,HMean_AP_RIS,HMean_RIS_UE,H_AP_RIS_grouped,H_RIS_UE_grouped,R_AP_UE,R_cascade,nbrOfRealizations,L,K,N_AP,tau_p,pilotIndex,p,risAssignment,S,Ngroup);
+            [Hhat,~,~,Hhat_cascade,~,~] = channelEstimates(H_AP_UE,HMean_AP_UE,HMean_AP_RIS,HMean_RIS_UE,H_AP_RIS_grouped,H_RIS_UE_grouped,R_AP_UE,R_cascade,nbrOfRealizations,L,K,N_AP,tau_p,pilotIndex,p,risAssignment,S,Ngroup);
             % Seleccionar fase de la RIS
             [thetaMatrix] = PhaseSelect(nbrOfRealizations,ones(Ngroup,S),Hhat,Hhat_cascade,risAssignment,S,Ngroup,p,N_AP,L);
-            thetaMatrix = repelem(thetaMatrix,groupRIS_size,1);
+            if (N_V_RIS == N_H_RIS  && log2(N_H_RIS^2) == floor(log2(N_H_RIS^2)))
+                thetaMatrix_aux2 = zeros(N_H_RIS,N_H_RIS,S);
+                thetaMatrix_aux3 = zeros(N_H_RIS*N_H_RIS,S);
+                cols = size(thetaMatrix,2);
+                for col = 1:cols
+                    theta_aux = reshape(thetaMatrix(:,col),[N_V_RIS/sqrt(groupRIS_size),N_V_RIS/sqrt(groupRIS_size)]); 
+                    thetaMatrix_aux2(:,:,col) = repelem(theta_aux,sqrt(groupRIS_size),sqrt(groupRIS_size));
+                    thetaMatrix_aux3(:,col) = reshape(thetaMatrix_aux2(:,:,col),[N_H_RIS*N_H_RIS,1]);
+                end
+            else
+                thetaMatrix_aux2 = zeros(N_V_RIS,N_H_RIS,S);
+                thetaMatrix_aux3 = zeros(N_V_RIS*N_H_RIS,S);
+                cols = size(thetaMatrix,2);
+                for col = 1:cols
+                    theta_aux = reshape(thetaMatrix(:,col),[N_V_RIS/groupRIS_size_V,N_H_RIS/groupRIS_size_H]); 
+                    thetaMatrix_aux2(:,:,col) = repelem(theta_aux,groupRIS_size_V,groupRIS_size_H);
+                    thetaMatrix_aux3(:,col) = reshape(thetaMatrix_aux2(:,:,col),[N_V_RIS*N_H_RIS,1]);
+                end
+            end
         
             % Canal agregado con las fases de las RISs configaudas
             H_eq_aux = zeros(L*N_AP, K, nbrOfRealizations);
             R_eq = zeros(N_AP, N_AP, L, K);
             for t = 1:nbrOfRealizations  % Por cada realización
-                h_reflected(:,:,t) =  H_AP_RIS(:,:,t) * diag(thetaMatrix(:)) * squeeze(H_RIS_UE(:, t, :));  % dim: (1x L*N_AP)
+                h_reflected(:,:,t) =  H_AP_RIS(:,:,t) * diag(thetaMatrix_aux3(:)) * squeeze(H_RIS_UE(:, t, :));  % dim: (1x L*N_AP)
                 H_eq_aux(:,:,t) = squeeze(H_AP_UE(:,t,:)) + h_reflected(:,:,t);
                 H_eq = permute(H_eq_aux,[1,3,2]);
                 for k = 1:K
@@ -86,7 +115,7 @@ for s = 1:length(S_values)
     end
 end
 
-%save('results1')
+%save('SE_Groupof64_20Setups1RIS1UEnoPrelog')
 
 %% Graficar resultados
 figure; hold on; box on;
@@ -98,7 +127,7 @@ aux2 = SE_PMMSE_DCC(:,:,2); % 5 RIS
 aux3 = SE_PMMSE_DCC(:,:,3); % 10 RIS
 aux4 = SE_PMMSE_DCC(:,:,4); % 20 RIS
 aux5 = SE_PMMSE_DCC(:,:,5); % 50 RIS
-aux6 = SE_PMMSE_DCC(:,:,6); % 100 RIS
+aux6 = SE_PMMSE_DCC(:,:,6); % 75 RIS
 
 
 plot(sort(aux1(:)), linspace(0,1,K*nbrOfSetups), 'k-', 'LineWidth', 2);
@@ -111,5 +140,6 @@ plot(sort(aux6(:)), linspace(0,1,K*nbrOfSetups), 'y-', 'LineWidth', 2);
 % % Ejes y leyenda
 xlabel('Spectral efficiency [bit/s/Hz]', 'Interpreter', 'Latex');
 ylabel('CDF', 'Interpreter', 'Latex');
+%legend({'P-MMSE 1 RIS 1 UE'}, 'Interpreter', 'Latex', 'Location', 'SouthEast');
 legend({'P-MMSE 0 RIS', 'P-MMSE 5 RIS', 'P-MMSE 10 RIS', 'P-MMSE 20 RIS', 'P-MMSE 50 RIS','P-MMSE 75 RIS'}, 'Interpreter', 'Latex', 'Location', 'SouthEast');
-xlim([0 25]);
+xlim([0 30]);

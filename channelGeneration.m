@@ -1,4 +1,4 @@
-function [H_AP_UE,HMean_AP_UE,HMean_RIS_UE_grouped,HMean_AP_RIS_grouped,H_AP_RIS_grouped,H_AP_RIS,H_RIS_UE_grouped,H_RIS_UE,R_cascade,Ngroup,H_cascade] = channelGeneration(R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,nbrOfRealizations,L,K,S,N_AP,N_RIS,HMeanWithoutPhase_AP_UE,HMeanWithoutPhase_AP_RIS,HMeanWithoutPhase_RIS_UE,groupRIS_size,N_H_RIS)
+function [H_AP_UE,HMean_AP_UE,HMean_RIS_UE_grouped,HMean_AP_RIS_grouped,H_AP_RIS_grouped,H_AP_RIS,H_RIS_UE_grouped,H_RIS_UE,R_cascade,Ngroup,H_cascade] = channelGeneration(R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,nbrOfRealizations,L,K,S,N_AP,N_RIS,HMeanWithoutPhase_AP_UE,HMeanWithoutPhase_AP_RIS,HMeanWithoutPhase_RIS_UE,groupRIS_size,N_H_RIS,N_V_RIS,groupRIS_size_H,groupRIS_size_V)
 % Esta función genera canales Rician con correlación espacial entre AP-UE,
 % RIS-AP y RIS-UE y en caso de agrupar los elementos de la RIS genera los
 % canales equivalentes de la agrupación
@@ -21,7 +21,8 @@ function [H_AP_UE,HMean_AP_UE,HMean_RIS_UE_grouped,HMean_AP_RIS_grouped,H_AP_RIS
 % HMeanWithoutPhase_AP_RIS  = Módulo de la componente de LoS del canal AP-RIS
 % HMeanWithoutPhase_RIS_UE  = Módulo de la componente de LoS del canal RIS-UE
 % groupRIS_size             = Tamaño de los grupos de una RIS
-% N_H_RIS                   = Número de filas de la RIS
+% N_H_RIS                   = Número de columnas de la RIS
+% N_V_RIS                   = Número de filas de la RIS
 % Argumentos de salida:
 % H_AP_UE                   = Canal Rician generado entre el AP y el UE de
 %                             dimensiones (L*N_AP,nbrOfRealizations,K)
@@ -65,12 +66,19 @@ end
 
 % ----- RIS-UE -----
 % Generar canal Rician para RIS-UE
-group_side = sqrt(groupRIS_size);
-if (group_side > 0)
-    Ngroup = (N_H_RIS / group_side)^2;
+if (N_H_RIS == N_V_RIS && log2(N_H_RIS*N_V_RIS) == floor(log2(N_H_RIS*N_V_RIS)))
+    group_side = sqrt(groupRIS_size);
+    if (group_side > 1)
+        Ngroup = (N_H_RIS / group_side)^2;
+    else
+        Ngroup = N_H_RIS^2;
+    end
+elseif(groupRIS_size_H>0 && groupRIS_size_V>0)
+    Ngroup = (N_H_RIS/groupRIS_size_H)*(N_V_RIS/groupRIS_size_V);
 else
-    Ngroup = N_H_RIS^2;
+    Ngroup = N_H_RIS*N_V_RIS;
 end
+
 M_RIS_UE = S*N_RIS;
 H_RIS_UE = zeros(M_RIS_UE, nbrOfRealizations, K); % Canal resultante
 H_RIS_UE_grouped = zeros(S*Ngroup, nbrOfRealizations, K);
@@ -93,7 +101,7 @@ for s = 1:S
         Rsqrt = sqrtm(R_RIS_UE(:,:,s,k));
         H_RIS_UE((s-1)*N_RIS+1:s*N_RIS,:,k) = sqrt(0.5)*Rsqrt*W_RIS_UE((s-1)*N_RIS+1:s*N_RIS,:,k) + HMean_RIS_UE((s-1)*N_RIS+1:s*N_RIS,:,k);    % Se aplica un ruido con correlación al canal
         % Comprobar si hay que agrupar los canales de la RIS
-        if (groupRIS_size>0)
+        if (groupRIS_size>1 && N_H_RIS == N_V_RIS && log2(N_H_RIS*N_V_RIS) == floor(log2(N_H_RIS*N_V_RIS)))
             H_aux = H_RIS_UE((s-1)*N_RIS + (1:N_RIS),:,k);
             H_aux_2 = reshape(H_aux, [N_H_RIS, N_H_RIS, nbrOfRealizations]);            % Convertir en matriz de N_H_RIS X N_H_RIS X nbrOfRealizations
             H_mean_aux = HMean_RIS_UE((s-1)*N_RIS + (1:N_RIS),:,k);
@@ -102,15 +110,42 @@ for s = 1:S
             H_mean_group = zeros(N_H_RIS/group_side, N_H_RIS/group_side, nbrOfRealizations); 
             for i = 1 : N_H_RIS/group_side
                 for j = 1 : N_H_RIS/group_side
-                    block = H_aux_2((i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side),:);
-                    block_group = H_mean_aux_2((i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side),:);
-                    H_group(i,j,:) = mean(block, [1 2]);
-                    H_mean_group(i,j,:) = mean(block_group, [1 2]);
+                    % Selección de un elemento próximo al centro de la
+                    % agrupación
+                    selected_metaatom_channel = H_aux_2((i-1)*group_side + (group_side/2),(j-1)*group_side + (group_side/2),:);
+                    selected_metaatom_channel_group = H_mean_aux_2((i-1)*group_side + (group_side/2),(j-1)*group_side + (group_side/2),:);
+                    H_group(i,j,:) = selected_metaatom_channel;
+                    H_mean_group(i,j,:) = selected_metaatom_channel_group;
+                    % block = H_aux_2((i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side),:);
+                    % block_group = H_mean_aux_2((i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side),:);
+                    % H_group(i,j,:) = mean(block, [1 2]);
+                    % H_mean_group(i,j,:) = mean(block_group, [1 2]);
                 end
             end
             H_RIS_UE_grouped((s-1)*Ngroup + (1:Ngroup), :, k) = reshape(H_group, [Ngroup, nbrOfRealizations]);
             HMean_RIS_UE_grouped((s-1)*Ngroup + (1:Ngroup), :, k) = reshape(H_mean_group, [Ngroup, nbrOfRealizations]);
-         else
+        elseif(groupRIS_size_H>0 && groupRIS_size_V >0  && log2(N_H_RIS*N_V_RIS) ~= floor(log2(N_H_RIS*N_V_RIS)))
+            H_aux = H_RIS_UE((s-1)*N_RIS + (1:N_RIS),:,k);
+            H_aux_2 = reshape(H_aux, [N_V_RIS, N_H_RIS, nbrOfRealizations]);            % Convertir en matriz de N_V_RIS X N_H_RIS X nbrOfRealizations
+            H_mean_aux = HMean_RIS_UE((s-1)*N_RIS + (1:N_RIS),:,k);
+            H_mean_aux_2= reshape(H_mean_aux, [N_V_RIS, N_H_RIS, nbrOfRealizations]); 
+            H_group = zeros(N_V_RIS/groupRIS_size_V, N_H_RIS/groupRIS_size_H, nbrOfRealizations); 
+            H_mean_group = zeros(N_V_RIS/groupRIS_size_V, N_H_RIS/groupRIS_size_H, nbrOfRealizations); 
+            center_V = ceil(groupRIS_size_V/2);
+            center_H = ceil(groupRIS_size_H/2);
+            for i = 1 : N_V_RIS/groupRIS_size_V         % filas
+                for j = 1 : N_H_RIS/groupRIS_size_H     % columnas
+                    % Selección del elemento central
+                    selected_metaatom_channel = H_aux_2((i-1)*groupRIS_size_V + center_V,(j-1)*groupRIS_size_H + center_H,:);
+                    selected_metaatom_channel_group = H_mean_aux_2((i-1)*groupRIS_size_V + center_V,(j-1)*groupRIS_size_H + center_H,:);
+                    H_group(i,j,:) = selected_metaatom_channel;
+                    H_mean_group(i,j,:) = selected_metaatom_channel_group;
+                end
+            end
+            H_RIS_UE_grouped((s-1)*Ngroup + (1:Ngroup), :, k) = reshape(H_group, [Ngroup, nbrOfRealizations]);
+            HMean_RIS_UE_grouped((s-1)*Ngroup + (1:Ngroup), :, k) = reshape(H_mean_group, [Ngroup, nbrOfRealizations]);
+
+        else
             % Si group=0 copiar sin agrupar
             H_RIS_UE_grouped((s-1)*N_RIS + (1:N_RIS), :, k) = H_RIS_UE((s-1)*N_RIS + (1:N_RIS), :, k);
             HMean_RIS_UE_grouped((s-1)*N_RIS + (1:N_RIS), :, k) = HMean_RIS_UE((s-1)*N_RIS + (1:N_RIS), :, k);
@@ -125,8 +160,8 @@ H_AP_RIS_grouped = zeros(L*N_AP, S*Ngroup, nbrOfRealizations);
 W_AP_RIS = randn(L*N_AP, S*N_RIS, nbrOfRealizations) + 1i*randn(L*N_AP, S*N_RIS, nbrOfRealizations);
 
 % Media del canal AP-RIS
-HMean_AP_RIS = zeros(L*N_AP, S*N_RIS, nbrOfRealizations);
-HMean_AP_RIS_grouped = zeros(L*N_AP, S*Ngroup, nbrOfRealizations);
+HMean_AP_RIS = zeros(L*N_AP, S*N_RIS, nbrOfRealizations, 'single');
+HMean_AP_RIS_grouped = zeros(L*N_AP, S*Ngroup, nbrOfRealizations, 'single');
 HMeanx_AP_RIS = reshape(repmat(HMeanWithoutPhase_AP_RIS, 1, nbrOfRealizations), L*N_AP, S*N_RIS, nbrOfRealizations);    % Se repite el canal tantas veces como realizaciones haya
 
 % Fase aleatoria para componente LoS AP-RIS
@@ -143,7 +178,7 @@ for l = 1:L
         for t = 1:nbrOfRealizations
             % Multiplicación matricial sin squeeze, accediendo directo
             H_AP_RIS((l-1)*N_AP+1:l*N_AP, (s-1)*N_RIS+1:s*N_RIS, t) = sqrt(0.5)*Rsqrt1*W_AP_RIS((l-1)*N_AP+1:l*N_AP,(s-1)*N_RIS+1:s*N_RIS,t)*Rsqrt2 + HMean_AP_RIS((l-1)*N_AP+1:l*N_AP,(s-1)*N_RIS+1:s*N_RIS,t);    %Se añade al canal ruido con correlación espacial
-            if groupRIS_size > 0
+            if (groupRIS_size>1 && N_H_RIS == N_V_RIS && log2(N_H_RIS*N_V_RIS) == floor(log2(N_H_RIS*N_V_RIS)))
 
                 % reshaping: cada fila del AP → matriz cuadrada NxN
                 % Tamaño: N_AP × N_RIS × N_RIS
@@ -158,12 +193,43 @@ for l = 1:L
                 idx = 1;
                 for i = 1 : N_H_RIS/group_side
                     for j = 1 : N_H_RIS/group_side
-
-                        block = H_aux(:,(i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side));
-                        block_mean = H_mean_aux(:,(i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side));
+                        % Selección de un elemento próximo al centro de la
+                        % agrupación
+                        H_group(:, idx) = H_aux(:,(i-1)*group_side + (group_side/2),(j-1)*group_side + (group_side/2));
+                        H_mean_group(:, idx) = H_mean_aux(:,(i-1)*group_side + (group_side/2),(j-1)*group_side + (group_side/2));
+                        % block = H_aux(:,(i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side));
+                        % block_mean = H_mean_aux(:,(i-1)*group_side + (1:group_side),(j-1)*group_side + (1:group_side));
                         % Media 2D en la RIS (no en el AP)
-                        H_group(:, idx) = mean(block, [2 3]);
-                        H_mean_group(:, idx) = mean(block_mean, [2 3]);
+                        % H_group(:, idx) = mean(block, [2 3]);
+                        % H_mean_group(:, idx) = mean(block_mean, [2 3]);
+                        idx = idx + 1;
+                    end
+                end
+
+                % Guardar en matriz final agrupada
+                H_AP_RIS_grouped((l-1)*N_AP+1:l*N_AP, (s-1)*Ngroup + (1:Ngroup), t) = H_group;
+                HMean_AP_RIS_grouped((l-1)*N_AP+1:l*N_AP, (s-1)*Ngroup + (1:Ngroup), t) = H_mean_group;
+
+            elseif(groupRIS_size_H>0 && groupRIS_size_V >0  && log2(N_H_RIS*N_V_RIS) ~= floor(log2(N_H_RIS*N_V_RIS)))
+           %(i-1)*group_side_V + center_V,(j-1)*group_side_H + center_H
+                % reshaping: cada fila del AP → matriz cuadrada NxN
+                % Tamaño: N_AP × N_RIS × N_RIS
+                H_aux = reshape( H_AP_RIS((l-1)*N_AP+1:l*N_AP, (s-1)*N_RIS+1:s*N_RIS, t), [N_AP, N_V_RIS, N_H_RIS]);
+                H_mean_aux = reshape( HMean_AP_RIS((l-1)*N_AP+1:l*N_AP, (s-1)*N_RIS+1:s*N_RIS, t), [N_AP, N_V_RIS, N_H_RIS]);
+
+                % Matriz agrupada
+                H_group = zeros(N_AP, Ngroup);
+                H_mean_group = zeros(N_AP, Ngroup);
+
+                % Recorrer únicamente la dimensión RIS
+                idx = 1;
+                for i = 1 : N_V_RIS/groupRIS_size_V
+                    for j = 1 : N_H_RIS/groupRIS_size_H
+                        % Selección de un elemento próximo al centro de la
+                        % agrupación
+                        H_group(:, idx) = H_aux(:,(i-1)*groupRIS_size_V + center_V,(j-1)*groupRIS_size_H + center_H);
+                        H_mean_group(:, idx) = H_mean_aux(:,(i-1)*groupRIS_size_V + center_V,(j-1)*groupRIS_size_H + center_H);
+                        
                         idx = idx + 1;
                     end
                 end

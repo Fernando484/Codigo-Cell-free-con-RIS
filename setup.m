@@ -1,4 +1,4 @@
-function [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,seed,ASD_varphi,LoS,fc,S,N_H_RIS,N_V_RIS)
+function [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,seed,ASD_varphi,ASD_theta,LoS,fc,S,N_H_RIS,N_V_RIS)
 %% Definir escenario
 HMean_AP_UE = zeros(N_AP*L,K);          % Canal LoS AP-UE
 HMean_RIS_UE = zeros(N_RIS*S,K);        % Canal LoS RIS-UE
@@ -35,7 +35,7 @@ distanceVertical_AP_RIS = h_RIS - h_BS;
 
 % Definir el espaciado de la antena (en número de longitudes de onda)
 antennaSpacing = 1/2;
-antennaSpacing_RIS = 1/4;
+antennaSpacing_RIS = 1/2;
 
 c = 3e8;
 
@@ -207,11 +207,12 @@ masterAPs = zeros(K,1);         % AP maestro por UE
 
             % Ángulos horizontal y vertical al UE
             angletoUE_varphi = angle(UEpositions(k) - APpositionsWrapped(l, whichpos(l)));
-            %angletoUE_theta = atan(distanceVertical_AP_UE/abs(UEpositions(k) - APpositionsWrapped(l, whichpos(l))));
+            angletoUE_theta = atan(distanceVertical_AP_UE/abs(UEpositions(k) - APpositionsWrapped(l, whichpos(l))));
             
             % Matriz de correlación espacial (modelo de dispersión local)
             if nargin > 6
                 R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * Rlocalscattering(N_AP, angletoUE_varphi, ASD_varphi, antennaSpacing);
+                %R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * functionRlocalscattering(N_AP, angletoUE_varphi, ASD_varphi,ASD_theta, antennaSpacing);
             else
                 R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * eye(N_AP);
             end
@@ -291,7 +292,7 @@ masterAPs = zeros(K,1);         % AP maestro por UE
 
             % Matriz de correlación espacial (modelo de dispersión local)
             if nargin > 6
-                R_RIS_UE(:,:,s,k) = gain_NLoS_RIS_UE(s) * antennaSpacing_RIS^2 * isotropicR(1,N_H_RIS, antennaSpacing_RIS);
+                R_RIS_UE(:,:,s,k) = gain_NLoS_RIS_UE(s) * antennaSpacing_RIS^2 * isotropicR(1,N_H_RIS,N_V_RIS,antennaSpacing_RIS);
             else
                 R_RIS_UE(:,:,s,k) = gain_NLoS_RIS_UE(s) * eye(N_RIS);
             end
@@ -384,7 +385,8 @@ masterAPs = zeros(K,1);         % AP maestro por UE
 
             if nargin > 6
                 R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * Rlocalscattering(N_AP, angle_varphi, ASD_varphi, antennaSpacing);
-                R_AP_RIS2(:,:,l,s) = gain_NLoS_AP_RIS(l) * antennaSpacing_RIS^2 * isotropicR(1,N_H_RIS, antennaSpacing_RIS);
+                %R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * functionRlocalscattering(N_AP, angle_varphi,angle_theta, ASD_varphi,ASD_theta, antennaSpacing);
+                R_AP_RIS2(:,:,l,s) = gain_NLoS_AP_RIS(l) * antennaSpacing_RIS^2 * isotropicR(1,N_H_RIS, N_V_RIS, antennaSpacing_RIS);
             else
                 R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * eye(N_AP);
                 R_AP_RIS2(:,:,l,s) = gain_NLoS_AP_RIS(l) * eye(N_RIS);
