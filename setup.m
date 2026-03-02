@@ -206,8 +206,8 @@ masterAPs = zeros(K,1);         % AP maestro por UE
         for l = 1:L
 
             % Ángulos horizontal y vertical al UE
-            angletoUE_varphi = deg2rad(angle(UEpositions(k) - APpositionsWrapped(l, whichpos(l))));
-            angletoUE_theta = deg2rad(atan(distanceVertical_AP_UE/abs(UEpositions(k) - APpositionsWrapped(l, whichpos(l)))));
+            angletoUE_varphi = angle(UEpositions(k) - APpositionsWrapped(l, whichpos(l)));
+            angletoUE_theta = atan(distanceVertical_AP_UE/abs(UEpositions(k) - APpositionsWrapped(l, whichpos(l))));
             
             % Matriz de correlación espacial (modelo de dispersión local)
             if nargin > 6
@@ -288,8 +288,8 @@ masterAPs = zeros(K,1);         % AP maestro por UE
         % Para cada RIS
         for s = 1:S
             % Ángulos horizontal y vertical al UE
-            angletoUE_varphi = deg2rad(angle(UEpositions(k) - RISpositions(s)));        %ángulo de azimut
-            angletoUE_theta = deg2rad(asin(distanceVertical_RIS_UE/dist_RIS_UE(s,k)));  %ángulo de elevación
+            angletoUE_varphi = angle(UEpositions(k) - RISpositions(s));        %ángulo de azimut
+            angletoUE_theta = asin(distanceVertical_RIS_UE/dist_RIS_UE(s,k));  %ángulo de elevación
 
             % Matriz de correlación espacial (modelo de dispersión local)
             if nargin > 6
@@ -382,8 +382,8 @@ masterAPs = zeros(K,1);         % AP maestro por UE
         for l = 1:L
 
             % Correlación espacial
-            angle_varphi = deg2rad(angle(RISpositions(s) - APpositions(l)));             %ángulo de azimut
-            angle_theta = deg2rad(atan(abs(distanceVertical_AP_RIS)/dist_AP_RIS(l,s)));  %ángulo de elevación
+            angle_varphi = angle(RISpositions(s) - APpositions(l));             %ángulo de azimut
+            angle_theta = atan(abs(distanceVertical_AP_RIS)/dist_AP_RIS(l,s));  %ángulo de elevación
 
             if nargin > 6
                 R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * functionRlocalscattering3D(1,N_AP,antennaSpacing,antennaSpacing,angletoUE_varphi,ASD_varphi,angletoUE_theta,ASD_theta,'Gaussian');
