@@ -5,6 +5,7 @@ eyeN = eye(N);
 
 %Calcular el factor prelog considerando únicamente la transmisión de datos en el enlace ascendente
 prelogFactor = (1 - tau_p / tau_c);
+%prelogFactor = 1;
 
 %Preparar para almacenar los resultados
 SE_P_MMSE = zeros(K,1);
