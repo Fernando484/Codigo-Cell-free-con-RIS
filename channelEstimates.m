@@ -111,7 +111,7 @@ for l = 1:L
                 for i = 1:length(ris_k)                                     % Recorrer las ris asignadas
                     s = ris_k(i);
                     for j = 1:Ngroup                                        % Recorrer cada elemento individual de la RIS
-                        %yMean_cascade = 0;
+                        % yMean_cascade = 0;
                         PsiInv_cascade = (p*tau_p*sum(R_cascade(:,:,l,t==pilotIndex,j + (Ngroup * (s - 1))),4) + eyeN_AP);
                         RPsi_cascade = R_cascade(:,:,l,k,j + (Ngroup * (s - 1)))/PsiInv_cascade;
                         for r = 1:nbrOfRealizations
@@ -122,7 +122,7 @@ for l = 1:L
                             if (Ngroup == 64)
                                 H_mean_eq_tl((l-1)*N_AP+1:l*N_AP,r) = HMean_AP_RIS((l-1)*N_AP+1:l*N_AP,j + (Ngroup * (s - 1)),r)*squeeze(HMean_RIS_UE(j + (Ngroup * (s - 1)),r,k));
                             else
-                                H_mean_eq_tl((l-1)*N_AP+1:l*N_AP,r) = squeeze(HMean_cascade_grouped((l-1)*N_AP+1:l*N_AP,j*s,r,k));
+                                H_mean_eq_tl((l-1)*N_AP+1:l*N_AP,r) = squeeze(HMean_cascade_grouped((l-1)*N_AP+1:l*N_AP,j + (Ngroup * (s - 1)),r,k));
                                 
                             end
                             % yMean_cascade(:,r) = yMean_cascade(:,r) + sqrt(p)*tau_p*HMean_AP_RIS((l-1)*N_AP+1:l*N_AP,j + (Ngroup * (s - 1)),r)*HMean_RIS_UE(j + (Ngroup * (s - 1)),r,k);
@@ -131,9 +131,10 @@ for l = 1:L
                         %yMean_cascade_j = sqrt(p)*tau_p*H_mean_eq_tl((l-1)*N_AP+1:l*N_AP,:);
                         yMean_cascade = sqrt(p)*tau_p*H_mean_eq_tl((l-1)*N_AP+1:l*N_AP,:);
                         % yp_cascade = sqrt(p)*tau_p*H_eq_tl((l-1)*N_AP+1:l*N_AP,:) + sqrt(tau_p)*(Np_cascade(:,:,l,t) + Np(:,:,l,t)) - yp; % Señal recibida por el canal en cascada de los elementos activos de la ris
-                        yp_cascade = sqrt(p)*tau_p*squeeze(sum(H_cascade_grouped((l-1)*N_AP+1:l*N_AP,j*s,:,t==pilotIndex),4)) + sqrt(tau_p)*(Np_cascade(:,:,l,t) + Np(:,:,l,t)) - yp;
+                        % yp_cascade = sqrt(p)*tau_p*squeeze(sum(H_cascade_grouped((l-1)*N_AP+1:l*N_AP,j*s,:,t==pilotIndex),4)) + sqrt(tau_p)*(Np_cascade(:,:,l,t) + Np(:,:,l,t)) - yp;
+                        yp_cascade = sqrt(p)*tau_p*(sum(H_AP_UE((l-1)*N_AP+1:l*N_AP,:,t==pilotIndex),3) + squeeze(sum(H_cascade_grouped((l-1)*N_AP+1:l*N_AP,j + (Ngroup * (s - 1)),:,t==pilotIndex),4))) + sqrt(tau_p)*Np_cascade(:,:,l,t);
                         % yp_cascade = sqrt(p)*tau_p*H_eq_tl((l-1)*N_AP+1:l*N_AP,:) + sqrt(tau_p)* Np(:,:,l,t) - Hhat((l-1)*N_AP+1:l*N_AP,:,k);
-                        Hhat_cascade((l-1)*N_AP+1:l*N_AP,j + (Ngroup * (s - 1)),:,k) = sqrt(p)*RPsi_cascade*(yp_cascade-yMean_cascade) + H_mean_eq_tl((l-1)*N_AP+1:l*N_AP,:);
+                        Hhat_cascade((l-1)*N_AP+1:l*N_AP,j + (Ngroup * (s - 1)),:,k) = (sqrt(p)*RPsi_cascade*(yp_cascade-yMean_cascade) + H_mean_eq_tl((l-1)*N_AP+1:l*N_AP,:))-Hhat((l-1)*N_AP+1:l*N_AP,:,k);
 
                         % % Correlación de estimación canal en cascada
                         % if nargout>4

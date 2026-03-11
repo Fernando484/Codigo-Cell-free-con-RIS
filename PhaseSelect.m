@@ -1,6 +1,7 @@
 function [thetaMatrix] = PhaseSelect(nbrOfRealizations,H_AP_UE,Hhat_cascade,risAssignment,S,Ngroup,p,N_AP,L)
 
 nbrOfIterations = 5;
+% thetaMatrix = exp(1i*ones(Ngroup, S, nbrOfRealizations));
 thetaMatrix = exp(1i*(-pi + 2*pi*rand(Ngroup, S, nbrOfRealizations)));
 
 for t = 1:nbrOfRealizations  % Por cada realización

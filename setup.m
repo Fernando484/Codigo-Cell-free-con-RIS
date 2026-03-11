@@ -213,7 +213,7 @@ masterAPs = zeros(K,1);         % AP maestro por UE
             if nargin > 6
                 R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * functionRlocalscattering3D(1,N_AP,antennaSpacing,antennaSpacing,angletoUE_varphi,ASD_varphi,angletoUE_theta,ASD_theta,'Gaussian');
                 % R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * Rlocalscattering(N_AP, angletoUE_varphi, ASD_varphi, antennaSpacing);
-                %R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * functionRlocalscattering(N_AP, angletoUE_varphi, ASD_varphi,ASD_theta, antennaSpacing);
+                % R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * functionRlocalscattering(N_AP, angletoUE_varphi,angletoUE_theta, ASD_varphi,ASD_theta, antennaSpacing);
             else
                 R_AP_UE(:,:,l,k) = gain_NLoS_AP_UE(l) * eye(N_AP);
             end
@@ -383,10 +383,10 @@ masterAPs = zeros(K,1);         % AP maestro por UE
 
             % Correlación espacial
             angle_varphi = angle(RISpositions(s) - APpositions(l));             %ángulo de azimut
-            angle_theta = atan(abs(distanceVertical_AP_RIS)/dist_AP_RIS(l,s));  %ángulo de elevación
+            angle_theta = atan(distanceVertical_AP_RIS/dist_AP_RIS(l,s));  %ángulo de elevación
 
             if nargin > 6
-                R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * functionRlocalscattering3D(1,N_AP,antennaSpacing,antennaSpacing,angletoUE_varphi,ASD_varphi,angletoUE_theta,ASD_theta,'Gaussian');
+                R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * functionRlocalscattering3D(1,N_AP,antennaSpacing,antennaSpacing,angle_varphi,ASD_varphi,angle_theta,ASD_theta,'Gaussian');
                 R_AP_RIS2(:,:,l,s) = gain_NLoS_AP_RIS(l) * functionRlocalscattering3D(N_H_RIS,N_V_RIS,antennaSpacing_RIS,antennaSpacing_RIS,angle_varphi,ASD_varphi,angle_theta,ASD_theta,'Gaussian');
                 % R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * Rlocalscattering(N_AP, angle_varphi, ASD_varphi, antennaSpacing);
                 %R_AP_RIS1(:,:,l,s) = gain_NLoS_AP_RIS(l) * functionRlocalscattering(N_AP, angle_varphi,angle_theta, ASD_varphi,ASD_theta, antennaSpacing);
