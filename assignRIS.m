@@ -1,4 +1,4 @@
-function risAssignment = assignRIS(probLoS_AP_UE, probLoS_RIS_UE)
+function risAssignment = assignRIS(probLoS_AP_UE, probLoS_RIS_UE,gain_NLoS_RIS_UE)
     [S, K] = size(probLoS_RIS_UE);
     risAsignadas = zeros(S, 1);        % Vector para saber si una RIS ya ha sido asignada
     %risAssignment = zeros(S, 1);       % Vector final: en la posición s, se guarda el usuario asignado a la RIS s
@@ -47,7 +47,7 @@ function risAssignment = assignRIS(probLoS_AP_UE, probLoS_RIS_UE)
         end
 
         % Elegir un candidato al azar entre los disponibles
-        mejor_usuario = candidatos(randi(length(candidatos)));
+        [~,mejor_usuario] = find(gain_NLoS_RIS_UE == max(gain_NLoS_RIS_UE(s,candidatos)));
 
         risAsignadas(s) = 1;
         risAssignment{s} = mejor_usuario;

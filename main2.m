@@ -11,7 +11,7 @@ N_AP = 4;        % Antenas por AP
 N_H_RIS = 8;    % Número de filas de la RIS
 N_V_RIS = 8;    % Número de columnas de la RIS
 N_RIS = N_V_RIS*N_H_RIS;     % Número de elementos de la RIS
-K = 1;          % Número de UEs
+K = 10;          % Número de UEs
 tau_c = 20000;     % Longitud del bloque de coherencia
 p = 100;         % Potencia de transmisión (mW)
 fc = 3.5;         % Frecuencia (GHz)
@@ -19,28 +19,29 @@ LoS = 2;         % Linea de visión directa
 % Desviación estándar angular en el modelo de dispersión local (en radianes)
 ASD_varphi = deg2rad(15);  % angulo de azimut 
 ASD_theta = deg2rad(15);  % angulo de elevación
-groupRIS_size = 1;         % 1,4,16,64
+groupRIS_size = 64;         % 1,4,16,64
 
 % Arreglos 3D para guardar resultados por tipo de canal 
 SE_PMMSE_DCC = zeros(K, nbrOfSetups, 6);  
 
 %% Numero de RIS
 %S_values = [0,5,10,20,50,75];
-S_values = 1;
+S_values = 5;
 for s = 1:length(S_values)
     S = S_values(s);
     tau_p = K + S*(N_RIS/groupRIS_size+1);
-    for n = 1:nbrOfSetups
+    %for n = 1:nbrOfSetups
+        n = 10;
         disp(['Setup ' num2str(n) '/' num2str(nbrOfSetups) ' asistido por ' num2str(S) ' RIS']);
     
         % Generar escenario
-        [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,n,ASD_varphi,ASD_theta,LoS,fc,S,N_H_RIS,N_V_RIS);
+        [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE, gainOverNoisedB_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,n,ASD_varphi,ASD_theta,LoS,fc,S,N_H_RIS,N_V_RIS);
         
         % Asignacion de RIS
         if S == 0
             risAssignment = [];
         else
-            risAssignment = assignRIS(probLoS_AP_UE, probLoS_RIS_UE);
+            risAssignment = assignRIS(probLoS_AP_UE, probLoS_RIS_UE,gainOverNoisedB_RIS_UE);
         end
         
         % Generar canales
@@ -126,11 +127,11 @@ for s = 1:length(S_values)
         SE_PMMSE_DCC(:,n,s) = SE_P_MMSE;
 
         clear Hhat H_cascade Hhat_cascade Hhat_agregated H_eq B B_cascade B_agregated  C C_cascade C_agregated R_eq HMean_cascade Hhat_cascade_aux;
-    end
+    %end
 end
 
-% save('SE_noGroup_100Setups1RIS1UEnoPrelog4')
-% save('SE_GroupOf4_100Setups1RIS1UEnoPrelog4')
+% save('SE_noGroup_Setup10_5RIS10UEnoPrelogV2')
+save('SE_GroupOf64_Setup10_5RIS10UEnoPrelogV2')
 
 %% Graficar resultados
 % figure; hold on; box on;

@@ -1,4 +1,4 @@
-function [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,seed,ASD_varphi,ASD_theta,LoS,fc,S,N_H_RIS,N_V_RIS)
+function [R_AP_UE,R_AP_RIS1,R_AP_RIS2,R_RIS_UE,pilotIndex,D,HMean_AP_UE, HMean_AP_RIS, HMean_RIS_UE, probLoS_AP_UE, probLoS_RIS_UE,gainOverNoisedB_RIS_UE] = setup(L,K,N_AP,N_RIS,tau_p,seed,ASD_varphi,ASD_theta,LoS,fc,S,N_H_RIS,N_V_RIS)
 %% Definir escenario
 HMean_AP_UE = zeros(N_AP*L,K);          % Canal LoS AP-UE
 HMean_RIS_UE = zeros(N_RIS*S,K);        % Canal LoS RIS-UE
@@ -41,6 +41,7 @@ c = 3e8;
 
 %Prepararar para guardar resultados
 gainOverNoisedB = zeros(L,K);   % SNR en dB por enlace
+gainOverNoisedB_RIS_UE = zeros(S,K);
 R_AP_UE = zeros(N_AP,N_AP,L,K);       % Matriz de correlación
 R_RIS_UE = zeros(N_RIS,N_RIS,S,K);      % Correlación RIS-UE
 R_AP_RIS1 = zeros(N_AP,N_AP,L,S);      % Correlación AP-RIS 1
@@ -270,7 +271,7 @@ masterAPs = zeros(K,1);         % AP maestro por UE
         channelGaindB_RIS_UE(probLoS_RIS_UE(:,k)==1)=-betaLoS_RIS_UE(probLoS_RIS_UE(:,k)==1);
         channelGaindB_RIS_UE(probLoS_RIS_UE(:,k)==0)=-betaNLoS_RIS_UE(probLoS_RIS_UE(:,k)==0);
         channelGain_RIS_UE = db2pow(channelGaindB_RIS_UE) .* db2pow(shadowing_RIS_UE') ./ db2pow(noiseVariancedBm); % Convert to linear scale and include shadowing and noise
-    
+        gainOverNoisedB_RIS_UE(:,k) = pow2db(channelGain_RIS_UE);
         % Cálculo del factor de Rician
         ricianFactor_RIS_UE = 10.^(1.3 - 0.003 * dist_RIS_UE(:,k));
         
