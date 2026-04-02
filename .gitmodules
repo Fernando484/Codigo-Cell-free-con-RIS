@@ -1,3 +1,6 @@
 [submodule "CF-PerfectCSI-for-RIS"]
 	path = CF-PerfectCSI-for-RIS
 	url = https://github.com/Fernando484/CF-PerfectCSI-for-RIS.git
+[submodule "Imperfect-CSI-for-RIS-Phase"]
+	path = Imperfect-CSI-for-RIS-Phase
+	url = https://github.com/Fernando484/Imperfect-CSI-for-RIS-Phase.git
